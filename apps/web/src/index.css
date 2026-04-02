@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Cairo", sans-serif;
+  overflow-x: clip;
+  direction: rtl;
+}
+
+@layer base {
+  :root {
+    --background: 36 20% 95%;
+    --foreground: 160 57% 15%;
+    --border: 160 20% 85%;
+    --input: 36 15% 92%;
+    --ring: 160 57% 24%;
+    
+    --primary: 160 57% 24%;
+    --primary-foreground: 36 20% 98%;
+    
+    --secondary: 31 52% 64%;
+    --secondary-foreground: 160 57% 15%;
+    
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --muted: 36 15% 90%;
+    --muted-foreground: 160 20% 40%;
+    
+    --accent: 31 52% 64%;
+    --accent-foreground: 160 57% 15%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 160 57% 15%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 57% 15%;
+    
+    --radius: 0.75rem;
+    
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  
+  .dark {
+    --background: 160 57% 8%;
+    --foreground: 36 20% 95%;
+    --border: 160 30% 20%;
+    --input: 160 40% 15%;
+    --ring: 31 52% 64%;
+    
+    --primary: 160 57% 24%;
+    --primary-foreground: 36 20% 98%;
+    
+    --secondary: 31 52% 64%;
+    --secondary-foreground: 160 57% 15%;
+    
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --muted: 160 30% 18%;
+    --muted-foreground: 36 15% 70%;
+    
+    --accent: 31 52% 64%;
+    --accent-foreground: 160 57% 15%;
+    
+    --card: 160 40% 12%;
+    --card-foreground: 36 20% 95%;
+    
+    --popover: 160 40% 12%;
+    --popover-foreground: 36 20% 95%;
+    
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 32px 0 rgba(26, 95, 74, 0.1);
+  }
+  
+  .glass-card-dark {
+    background: rgba(26, 95, 74, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 165, 116, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  }
+  
+  .glass-section {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  .glass-header {
+    background: rgba(245, 243, 240, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(26, 95, 74, 0.1);
+  }
+  
+  .text-shadow-sm {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .text-shadow-md {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 12px 40px 0 rgba(26, 95, 74, 0.15);
+    transform: translateY(-2px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark .glass-card {
+    background: rgba(26, 95, 74, 0.25);
+    border-color: rgba(212, 165, 116, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+  }
+
+  .dark .glass-card:hover {
+    background: rgba(26, 95, 74, 0.35);
+    box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
+  }
+}
