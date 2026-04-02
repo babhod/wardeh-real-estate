@@ -1,0 +1,7 @@
+"$schema" = "./node_modules/wrangler/config-schema.json"
+name = "wardeh-real-estate"
+compatibility_date = "2026-04-02"
+
+[assets]
+directory = "../../dist/apps/web"
+not_found_handling = "single-page-application"
