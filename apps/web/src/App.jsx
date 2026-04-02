@@ -11,6 +11,8 @@ import BlogPage from '@/pages/BlogPage.jsx';
 import BlogPostPage from '@/pages/BlogPostPage.jsx';
 import ForSalePage from '@/pages/ForSalePage.jsx';
 import ForRentPage from '@/pages/ForRentPage.jsx';
+import PropertiesPage from '@/pages/PropertiesPage.jsx';
+import PropertyDetailPage from '@/pages/PropertyDetailPage.jsx';
 import FloatingWhatsApp from '@/components/FloatingWhatsApp.jsx';
 import { Toaster } from '@/components/ui/toaster.jsx';
 
@@ -28,6 +30,8 @@ function App() {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
+            <Route path="/properties" element={<PropertiesPage />} />
+            <Route path="/property/:id" element={<PropertyDetailPage />} />
             <Route path="/for-sale" element={<ForSalePage />} />
             <Route path="/for-rent" element={<ForRentPage />} />
           </Routes>
