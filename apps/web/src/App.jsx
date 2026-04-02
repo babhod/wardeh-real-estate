@@ -1,10 +1,10 @@
 import React from 'react';
 import { Route, Routes, BrowserRouter as Router } from 'react-router-dom';
-import ScrollToTop from '@/components/ScrollToTop.jsx';
-import Header from '@/components/Header.jsx';
-import Footer from '@/components/Footer.jsx';
-import HomePage from '@/pages/HomePage.jsx';
-import ServicesPage from '@/pages/ServicesPage.jsx';
+import ScrollToTop from '@/components/ScrollToTop';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import HomePage from '@/pages/HomePage';
+import ServicesPage from '@/pages/ServicesPage';
 import AboutPage from '@/pages/AboutPage.jsx';
 import ContactPage from '@/pages/ContactPage.jsx';
 import BlogPage from '@/pages/BlogPage.jsx';

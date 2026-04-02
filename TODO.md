@@ -1,31 +1,23 @@
-# PropertyCard Redesign TODO
+# Fix TypeScript Errors Plan
 
-## Plan approved ✅
+## Steps:
 
-**Steps completed:**
+### 1. [x] Update apps/web/jsconfig.json
 
-### 1. ✅ Create TODO.md
+- Migrate baseUrl/paths to TS6+ format
+- Add standard Vite React TS config (jsx, moduleResolution, etc.)
 
-### 2. ✅ Update Card container classes for modern shadows/rounding/spacing
+### 2. [x] Fix apps/web/src/pages/ForSalePage.jsx syntax
 
-### 3. ✅ Refine Image Section with improved heart overlay and hover
+- Reformat end section for parser compatibility
+- Add any @ts-ignore if needed
 
-### 4. ✅ Update Badges Row to pill-style with better spacing
+### 3. [x] Test & Verify
 
-### 5. ✅ Enhance Property Title typography
+- Restart VSCode TS server
+- Run `cd apps/web && npm run dev`
+- Confirm errors gone
 
-### 6. ✅ Refactor Property Features to horizontal pill cards
+### 4. [x] Update TODO.md with completion status
 
-### 7. ✅ Improve Location Row styling
-
-### 8. ✅ Strengthen Bottom Row (Price + CTA) visual hierarchy
-
-### 9. ✅ Add comprehensive JSX section comments for Elementor team
-
-### 10. ✅ Simplify hover effects to CSS-only (remove framer-motion)
-
-### 11. ✅ Ensure responsive design and Tailwind consistency
-
-### 12. ✅ Test component and attempt completion
-
-**Status: Complete with final adjustment** - Bottom layout updated to stacked price + button rows (always vertical). All refinements applied.
+✅ All steps complete! Errors fixed.

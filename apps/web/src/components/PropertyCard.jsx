@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, MapPin, Bed, Bath, Maximize2, ArrowRight } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card.jsx';
-import { Badge } from '@/components/ui/badge.jsx';
-import { Button } from '@/components/ui/button.jsx';
-import { AspectRatio } from '@/components/ui/aspect-ratio.jsx';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 const PropertyCard = ({ property }) => {
   if (!property) return null;

@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
-import PropertyCard from '@/components/PropertyCard.jsx';
-import PropertyFilters from '@/components/PropertyFilters.jsx';
+import PropertyCard from '@/components/PropertyCard';
 import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button.jsx';
-import { Badge } from '@/components/ui/badge.jsx';
-import { Card, CardContent } from '@/components/ui/card.jsx';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const mockProperties = [
   {
@@ -115,6 +116,10 @@ const mockProperties = [
   },
 ];
 
+const typesOptions = ['اختر نوع العقار', 'شقة', 'منزل', 'فيلا', 'مكتب', 'محل تجاري', 'أرض', 'مستودع'];
+const citiesOptions = ['اختر المدينة', 'دمشق', 'حلب', 'حمص', 'حماة', 'اللاذقية', 'طرطوس', 'إدلب'];
+const roomsOptions = ['عدد الغرف', '1', '2', '3', '4', '5+'];
+
 const ForSalePage = () => {
   const [filters, setFilters] = useState({});
 
@@ -124,13 +129,16 @@ const ForSalePage = () => {
       if (filters.search && !property.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
       
       // Type
-      if (filters.types?.length && !filters.types.includes(property.type)) return false;
+      if ((filters.type && property.type !== filters.type) || (filters.types?.length && !filters.types.includes(property.type))) return false;
       
       // City
       if (filters.city && property.city !== filters.city) return false;
       
       // Rooms
-      if (filters.rooms && filters.rooms !== 'أي' && property.rooms !== parseInt(filters.rooms)) return false;
+      if (filters.rooms && filters.rooms !== 'عدد الغرف') {
+        const roomNum = parseInt(filters.rooms);
+        if (filters.rooms === '5+' ? property.rooms < 5 : property.rooms !== roomNum) return false;
+      }
       
       // Price (in millions)
       const priceNum = parseInt(property.price.replace(/[^\d]/g, '')) || 0;
@@ -148,6 +156,19 @@ const ForSalePage = () => {
     });
   }, [filters]);
 
+  const containerVariants = {
+    visible: {
+      transition: {
+        staggerChildren: 0.08,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   return (
     <>
       <Helmet>
@@ -156,85 +177,113 @@ const ForSalePage = () => {
       </Helmet>
 
       <div className="min-h-screen pt-24 pb-16 bg-background">
-        {/* Header */}
-        <section className="py-16 bg-[radial-gradient(circle_at_top,_rgba(7,107,87,0.18),_transparent_60%)]">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="max-w-4xl mx-auto text-center space-y-6"
-            >
-              <Badge className="inline-flex px-6 py-2 text-base font-semibold bg-accent/90">
-                عقارات للبيع
-              </Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                ابحث عن عقارك المثالي للشراء
-              </h1>
-              <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-                اكتشف مجموعة واسعة من العقارات للبيع في مختلف المدن السورية بأسعار تنافسية وخدمة متميزة
-              </p>
-            </motion.div>
-          </div>
-        </section>
+        <div className="sticky top-[5.5rem] z-50 w-full">
+          <div className="w-full px-4">
+            <div className="bg-background/95 backdrop-blur-md border border-border/40 rounded-none p-4 mb-0 w-full">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                <Input
+                  value={filters.search || ''}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  placeholder="أدخل كلمات بحث -  موقع، نوع، سعر"
+                  className="flex-1"
+                />
+                <Button onClick={() => setFilters({})} className="w-full md:w-auto">
+                  مسح الكل
+                </Button>
+              </div>
 
-        <div className="container mx-auto px-4 pt-8 lg:pt-12 -mt-12 lg:-mt-20 lg:pb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-            {/* Filters */}
-            <PropertyFilters filters={filters} onFilterChange={setFilters} />
-
-            {/* Properties Grid */}
-            <div className="lg:col-span-3 space-y-8 pt-8 lg:pt-4">
-              {filteredProperties.length === 0 ? (
-                <Card className="glass-card border-border/50">
-                  <CardContent className="py-16 text-center">
-                    <h3 className="text-2xl font-bold text-foreground mb-2">لا توجد عقارات</h3>
-                    <p className="text-muted-foreground mb-6">لم يتم العثور على عقارات مطابقة لفلاتر البحث</p>
-                    <Button onClick={() => setFilters({})} variant="outline">
-                      إظهار جميع العقارات
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="text-foreground font-bold text-xl">
-                      {filteredProperties.length} عقار متاح
-                    </div>
-                    <Button variant="outline" onClick={() => setFilters({})} className="gap-2">
-                      <X className="h-4 w-4" />
-                      مسح الفلاتر
-                    </Button>
-                  </div>
-
-                  <motion.div
-                    initial="hidden"
-                    animate="visible"
-                    variants={{
-                      visible: {
-                        transition: {
-                          staggerChildren: 0.08,
-                        },
-                      },
-                    }}
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8"
-                  >
-                    {filteredProperties.map((property) => (
-                      <motion.div
-                        key={property.id}
-                        variants={{
-                          hidden: { opacity: 0, y: 12 },
-                          visible: { opacity: 1, y: 0 },
-                        }}
-                        className="h-full"
-                      >
-                        <PropertyCard property={property} />
-                      </motion.div>
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+                <Select dir="rtl" value={filters.city || 'اختر المدينة'} onValueChange={(value) => setFilters({ ...filters, city: value === 'اختر المدينة' ? undefined : value })}>
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder="اختر المدينة" />
+                  </SelectTrigger>
+                  <SelectContent dir="rtl">
+                    {citiesOptions.map((city) => (
+                      <SelectItem key={city} value={city} dir="rtl" className="text-right">{city}</SelectItem>
                     ))}
-                  </motion.div>
-                </>
-              )}
+                  </SelectContent>
+                </Select>
+
+                <Select dir="rtl" value={filters.type || 'اختر نوع العقار'} onValueChange={(value) => setFilters({ ...filters, type: value === 'اختر نوع العقار' ? undefined : value })}>
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder="اختر نوع العقار" />
+                  </SelectTrigger>
+                  <SelectContent dir="rtl">
+                    {typesOptions.map((type) => (
+                      <SelectItem key={type} value={type} dir="rtl" className="text-right">{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select dir="rtl" value={filters.rooms || 'عدد الغرف'} onValueChange={(value) => setFilters({ ...filters, rooms: value === 'عدد الغرف' ? undefined : value })}>
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder="عدد الغرف" />
+                  </SelectTrigger>
+                  <SelectContent dir="rtl">
+                    {roomsOptions.map((rooms) => (
+                      <SelectItem key={rooms} value={rooms} dir="rtl" className="text-right">{rooms}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="من (مليون)"
+                    value={filters.priceMin ?? ''}
+                    onChange={(e) => setFilters({ ...filters, priceMin: Number(e.target.value) || undefined })}
+                    className="w-full"
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="إلى (مليون)"
+                    value={filters.priceMax ?? ''}
+                    onChange={(e) => setFilters({ ...filters, priceMax: Number(e.target.value) || undefined })}
+                    className="w-full"
+                  />
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 pt-8 lg:pt-4">
+          <div className="space-y-6">
+            {filteredProperties.length === 0 ? (
+              <Card className="glass-card border-border/50">
+                <CardContent className="py-16 text-center">
+                  <h3 className="text-2xl font-bold text-foreground mb-2">لا توجد عقارات</h3>
+                  <p className="text-muted-foreground mb-6">لم يتم العثور على عقارات مطابقة لفلاتر البحث</p>
+                  <Button onClick={() => setFilters({})} variant="outline">
+                    إظهار جميع العقارات
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                  <div className="text-foreground font-bold text-xl">
+                    {filteredProperties.length} عقار متاح
+                  </div>
+                </div>
+
+                <motion.div
+                  key="properties-grid"
+                  initial="hidden"
+                  animate="visible"
+                  variants={containerVariants}
+                  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8"
+                >
+                  {filteredProperties.map((property) => (
+                    <motion.div key={property.id} variants={itemVariants} className="h-full">
+                      <PropertyCard property={property} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
+            )}
           </div>
         </div>
       </div>

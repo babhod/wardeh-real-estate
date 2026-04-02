@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Search, Filter, ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button.jsx';
-import { Input } from '@/components/ui/input.jsx';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.jsx';
-import { Checkbox } from '@/components/ui/checkbox.jsx';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet.jsx';
-import { Slider } from '@/components/ui/slider.jsx';
-import { Label } from '@/components/ui/label.jsx';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils.js';
 
 const propertyTypes = ['شقة', 'منزل', 'فيلا', 'مكتب', 'محل تجاري', 'أرض', 'مستودع'];
