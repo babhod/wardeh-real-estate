@@ -2,10 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import PropertyCard from '@/components/PropertyCard';
+import PropertyFilters from '@/components/PropertyFilters';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const mockSaleProperties = [
   {
@@ -307,51 +307,149 @@ const mockRentProperties = [
   },
 ];
 
-const allProperties = [...mockSaleProperties, ...mockRentProperties];
+const mapCategory = (type) => {
+  if (type === 'شقة') return 'شقق';
+  if (type === 'فيلا') return 'فلل';
+  if (type === 'منزل') return 'منازل';
+  if (type === 'مكتب') return 'مكاتب';
+  if (type === 'محل تجاري') return 'محلات';
+  return '';
+};
 
-const typesOptions = ['اختر نوع العقار', 'شقة', 'منزل', 'فيلا', 'مكتب', 'محل تجاري', 'أرض', 'مستودع'];
-const citiesOptions = ['اختر المدينة', 'دمشق', 'حلب', 'حمص', 'حماة', 'اللاذقية', 'طرطوس', 'إدلب', 'درعا'];
-const roomsOptions = ['عدد الغرف', '1', '2', '3', '4', '5+'];
-const purposeOptions = ['الغرض', 'للبيع', 'للإيجار', 'الكل'];
+const mapPropertyType = (type) => (['شقة', 'منزل', 'فيلا'].includes(type) ? 'سكني' : 'تجاري');
+
+const normalizeAreaName = (address) => {
+  if (!address) return '';
+  const parts = address.split('،');
+  return parts[0]?.trim() || address;
+};
+
+const parsePriceMillions = (price) => {
+  const digits = price.replace(/[^\d]/g, '');
+  return parseInt(digits, 10) || 0;
+};
+
+const enrichProperty = (property) => {
+  const priceMillions = parsePriceMillions(property.price);
+  const priceSYP = priceMillions * 1000;
+  const priceUSD = Math.round(priceSYP / 500);
+  const totalArea = property.area || 0;
+  const builtArea = Math.max(0, Math.round(totalArea * 0.85));
+
+  return {
+    ...property,
+    rentDuration: property.rentDuration || (property.purpose === 'rent' ? 'شهري' : ''),
+    propertyType: mapPropertyType(property.type),
+    category: mapCategory(property.type),
+    governorate: property.governorate || property.city,
+    areaName: property.areaName || normalizeAreaName(property.address),
+    builtArea,
+    totalArea,
+    floor: property.floor || (property.type === 'شقة' || property.type === 'مكتب' ? '2' : 'أرضي'),
+    age: property.age || '0-5 سنوات',
+    constructionStatus: property.constructionStatus || 'تم',
+    heating: property.heating || (property.type === 'مستودع' || property.type === 'أرض' ? 'لا يوجد' : 'مركزي'),
+    cooling: property.cooling || (property.type === 'مستودع' || property.type === 'أرض' ? 'لا يوجد' : 'مكيف'),
+    balconies: property.balconies || (property.type === 'شقة' ? 'واحدة' : 'لا يوجد'),
+    parking: property.parking || 'كراج',
+    furniture: property.furniture || 'غير مفروش',
+    elevator: property.elevator || (property.type === 'شقة' || property.type === 'مكتب' ? 'يوجد' : 'لا يوجد'),
+    occupancy: property.occupancy || 'شاغر',
+    buildingCondition: property.buildingCondition || 'جديد',
+    taboType: property.taboType || 'طابو أخضر',
+    priceUSD,
+    priceSYP,
+  };
+};
+
+const allProperties = [...mockSaleProperties, ...mockRentProperties].map(enrichProperty);
 
 const PropertiesPage = () => {
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState({ listingType: 'all' });
 
   const filteredProperties = useMemo(() => {
     return allProperties.filter((property) => {
-      // Purpose
-      if (filters.purpose && filters.purpose !== 'الكل') {
-        if (filters.purpose === 'للبيع' && property.purpose !== 'sale') return false;
-        if (filters.purpose === 'للإيجار' && property.purpose !== 'rent') return false;
-      }
+      // Listing type
+      if (filters.listingType && filters.listingType !== 'all' && property.purpose !== filters.listingType) return false;
+      if (filters.listingType === 'rent' && filters.rentDuration && property.rentDuration !== filters.rentDuration) return false;
 
       // Search
       if (filters.search && !property.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
 
-      // Type
-      if (filters.type && property.type !== filters.type) return false;
+      // Property type
+      if (filters.propertyType && property.propertyType !== filters.propertyType) return false;
+
+      // Category
+      if (filters.category && property.category !== filters.category) return false;
+
+      // Governorate
+      if (filters.governorate && property.governorate !== filters.governorate) return false;
 
       // City
       if (filters.city && property.city !== filters.city) return false;
 
-      // Rooms
-      if (filters.rooms && filters.rooms !== 'عدد الغرف') {
-        const roomNum = parseInt(filters.rooms);
-        if (filters.rooms === '5+' ? property.rooms < 5 : property.rooms !== roomNum) return false;
-      }
-
-      // Price (in millions - remove /شهر)
-      const priceStr = property.price.replace(/[^\d]/g, '');
-      const priceNum = parseInt(priceStr) || 0;
-      if (filters.priceMin && priceNum < filters.priceMin) return false;
-      if (filters.priceMax && priceNum > filters.priceMax) return false;
-
       // Area
-      if (filters.areaMin && property.area < filters.areaMin) return false;
-      if (filters.areaMax && property.area > filters.areaMax) return false;
+      if (filters.area && property.areaName !== filters.area) return false;
 
-      // Condition
-      if (filters.condition && property.status !== filters.condition) return false;
+      // Price USD
+      if (filters.usdMin && property.priceUSD < filters.usdMin) return false;
+      if (filters.usdMax && property.priceUSD > filters.usdMax) return false;
+
+      // Price SYP
+      if (filters.sypMin && property.priceSYP < filters.sypMin) return false;
+      if (filters.sypMax && property.priceSYP > filters.sypMax) return false;
+
+      // Built area
+      if (filters.builtMin && property.builtArea < filters.builtMin) return false;
+      if (filters.builtMax && property.builtArea > filters.builtMax) return false;
+
+      // Total area
+      if (filters.totalMin && property.totalArea < filters.totalMin) return false;
+      if (filters.totalMax && property.totalArea > filters.totalMax) return false;
+
+      // Rooms
+      const roomsNum = parseInt(filters.rooms, 10);
+      if (filters.rooms && roomsNum && (roomsNum >= 5 ? property.rooms < 5 : property.rooms !== roomsNum)) return false;
+
+      // Bathrooms
+      const bathsNum = parseInt(filters.bathrooms, 10);
+      if (filters.bathrooms && bathsNum && property.baths !== bathsNum) return false;
+
+      // Floor
+      if (filters.floor && property.floor !== filters.floor) return false;
+
+      // Age
+      if (filters.age && property.age !== filters.age) return false;
+
+      // Construction status
+      if (filters.constructionStatus && property.constructionStatus !== filters.constructionStatus) return false;
+
+      // Heating
+      if (filters.heating && property.heating !== filters.heating) return false;
+
+      // Cooling
+      if (filters.cooling && property.cooling !== filters.cooling) return false;
+
+      // Balconies
+      if (filters.balconies && property.balconies !== filters.balconies) return false;
+
+      // Parking
+      if (filters.parking && property.parking !== filters.parking) return false;
+
+      // Furniture
+      if (filters.furniture && property.furniture !== filters.furniture) return false;
+
+      // Elevator
+      if (filters.elevator && property.elevator !== filters.elevator) return false;
+
+      // Occupancy
+      if (filters.occupancy && property.occupancy !== filters.occupancy) return false;
+
+      // Building condition
+      if (filters.buildingCondition && property.buildingCondition !== filters.buildingCondition) return false;
+
+      // Tabo type
+      if (filters.taboType && property.taboType !== filters.taboType) return false;
 
       return true;
     });
@@ -378,9 +476,10 @@ const PropertiesPage = () => {
       </Helmet>
 
       <div className="min-h-screen pt-[5.5rem] pb-16 bg-background">
-        <div className="sticky top-[5.5rem] z-50 w-full">
-          <div className="w-full px-4">
-            <div className="bg-background/95 backdrop-blur-md border border-border/40 rounded-none p-4 mb-0 w-full">
+        <div className="container mx-auto px-4 pt-8 lg:pt-4">
+          <div className="lg:grid lg:grid-cols-[1fr_320px] gap-8 items-start">
+            {/* Properties Grid */}
+            <div className="space-y-6">
               <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
                 <Input
                   value={filters.search || ''}
@@ -388,142 +487,52 @@ const PropertiesPage = () => {
                   placeholder="أدخل كلمات بحث - موقع، نوع، سعر"
                   className="flex-1"
                 />
-                <Button onClick={() => setFilters({})} className="w-full md:w-auto">
+                <Button onClick={() => setFilters({ listingType: 'all' })} className="w-full md:w-auto">
                   مسح الكل
                 </Button>
               </div>
 
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
-                <Select
-                  dir="rtl"
-                  value={filters.purpose || 'الغرض'}
-                  onValueChange={(value) => setFilters({ ...filters, purpose: value === 'الغرض' ? undefined : value })}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="الغرض" />
-                  </SelectTrigger>
-                  <SelectContent dir="rtl">
-                    {purposeOptions.map((purpose) => (
-                      <SelectItem key={purpose} value={purpose} dir="rtl" className="text-right">
-                        {purpose}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  dir="rtl"
-                  value={filters.city || 'اختر المدينة'}
-                  onValueChange={(value) => setFilters({ ...filters, city: value === 'اختر المدينة' ? undefined : value })}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="اختر المدينة" />
-                  </SelectTrigger>
-                  <SelectContent dir="rtl">
-                    {citiesOptions.map((city) => (
-                      <SelectItem key={city} value={city} dir="rtl" className="text-right">
-                        {city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  dir="rtl"
-                  value={filters.type || 'اختر نوع العقار'}
-                  onValueChange={(value) => setFilters({ ...filters, type: value === 'اختر نوع العقار' ? undefined : value })}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="اختر نوع العقار" />
-                  </SelectTrigger>
-                  <SelectContent dir="rtl">
-                    {typesOptions.map((type) => (
-                      <SelectItem key={type} value={type} dir="rtl" className="text-right">
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  dir="rtl"
-                  value={filters.rooms || 'عدد الغرف'}
-                  onValueChange={(value) => setFilters({ ...filters, rooms: value === 'عدد الغرف' ? undefined : value })}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="عدد الغرف" />
-                  </SelectTrigger>
-                  <SelectContent dir="rtl">
-                    {roomsOptions.map((rooms) => (
-                      <SelectItem key={rooms} value={rooms} dir="rtl" className="text-right">
-                        {rooms}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    type="number"
-                    min={0}
-                    placeholder="من (مليون)"
-                    value={filters.priceMin ?? ''}
-                    onChange={(e) => setFilters({ ...filters, priceMin: Number(e.target.value) || undefined })}
-                    className="w-full"
-                  />
-                  <Input
-                    type="number"
-                    min={0}
-                    placeholder="إلى (مليون)"
-                    value={filters.priceMax ?? ''}
-                    onChange={(e) => setFilters({ ...filters, priceMax: Number(e.target.value) || undefined })}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4 pt-8 lg:pt-4">
-          <div className="space-y-6">
-            {filteredProperties.length === 0 ? (
-              <Card className="glass-card border-border/50">
-                <CardContent className="py-16 text-center">
-                  <h3 className="text-2xl font-bold text-foreground mb-2">لا توجد عقارات</h3>
-                  <p className="text-muted-foreground mb-6">لم يتم العثور على عقارات مطابقة لفلاتر البحث</p>
-                  <Button onClick={() => setFilters({})} variant="outline">
-                    إظهار جميع العقارات
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div>
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-                  <div className="text-foreground font-bold text-xl">
-                    {filteredProperties.length} عقار متاح
+              {filteredProperties.length === 0 ? (
+                <Card className="glass-card border-border/50">
+                  <CardContent className="py-16 text-center">
+                    <h3 className="text-2xl font-bold text-foreground mb-2">لا توجد عقارات</h3>
+                    <p className="text-muted-foreground mb-6">لم يتم العثور على عقارات مطابقة لفلاتر البحث</p>
+                    <Button onClick={() => setFilters({ listingType: 'all' })} variant="outline">
+                      إظهار جميع العقارات
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                    <div className="text-foreground font-bold text-xl">
+                      {filteredProperties.length} عقار متاح
+                    </div>
                   </div>
-                </div>
 
-                <motion.div
-                  key="properties-grid"
-                  initial="hidden"
-                  animate="visible"
-                  variants={containerVariants}
-                  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8"
-                >
-                  {filteredProperties.map((property) => (
-                    <motion.div
-                      key={property.id}
-                      variants={itemVariants}
-                      className="h-full"
-                    >
-                      <PropertyCard property={property} />
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </div>
-            )}
+                  <motion.div
+                    key="properties-grid"
+                    initial="hidden"
+                    animate="visible"
+                    variants={containerVariants}
+                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8"
+                  >
+                    {filteredProperties.map((property) => (
+                      <motion.div
+                        key={property.id}
+                        variants={itemVariants}
+                        className="h-full"
+                      >
+                        <PropertyCard property={property} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
+              )}
+            </div>
+
+            {/* Filters Sidebar */}
+            <PropertyFilters filters={filters} onFilterChange={setFilters} />
           </div>
         </div>
       </div>

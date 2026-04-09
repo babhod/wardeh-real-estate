@@ -308,7 +308,62 @@ const mockRentProperties = [
   },
 ];
 
-const allProperties = [...mockSaleProperties, ...mockRentProperties];
+const mapCategory = (type) => {
+  if (type === 'شقة') return 'شقق';
+  if (type === 'فيلا') return 'فلل';
+  if (type === 'منزل') return 'منازل';
+  if (type === 'مكتب') return 'مكاتب';
+  if (type === 'محل تجاري') return 'محلات';
+  return '';
+};
+
+const mapPropertyType = (type) => (['شقة', 'منزل', 'فيلا'].includes(type) ? 'سكني' : 'تجاري');
+
+const normalizeAreaName = (address) => {
+  if (!address) return '';
+  const parts = address.split('،');
+  return parts[0]?.trim() || address;
+};
+
+const parsePriceMillions = (price) => {
+  const digits = price.replace(/[^\d]/g, '');
+  return parseInt(digits, 10) || 0;
+};
+
+const enrichProperty = (property) => {
+  const priceMillions = parsePriceMillions(property.price);
+  const priceSYP = priceMillions * 1000;
+  const priceUSD = Math.round(priceSYP / 500);
+  const totalArea = property.area || 0;
+  const builtArea = Math.max(0, Math.round(totalArea * 0.85));
+
+  return {
+    ...property,
+    rentDuration: property.rentDuration || (property.purpose === 'rent' ? 'شهري' : ''),
+    propertyType: mapPropertyType(property.type),
+    category: mapCategory(property.type),
+    governorate: property.governorate || property.city,
+    areaName: property.areaName || normalizeAreaName(property.address),
+    builtArea,
+    totalArea,
+    floor: property.floor || (property.type === 'شقة' || property.type === 'مكتب' ? '2' : 'أرضي'),
+    age: property.age || '0-5 سنوات',
+    constructionStatus: property.constructionStatus || 'تم',
+    heating: property.heating || (property.type === 'مستودع' || property.type === 'أرض' ? 'لا يوجد' : 'مركزي'),
+    cooling: property.cooling || (property.type === 'مستودع' || property.type === 'أرض' ? 'لا يوجد' : 'مكيف'),
+    balconies: property.balconies || (property.type === 'شقة' ? 'واحدة' : 'لا يوجد'),
+    parking: property.parking || 'كراج',
+    furniture: property.furniture || 'غير مفروش',
+    elevator: property.elevator || (property.type === 'شقة' || property.type === 'مكتب' ? 'يوجد' : 'لا يوجد'),
+    occupancy: property.occupancy || 'شاغر',
+    buildingCondition: property.buildingCondition || 'جديد',
+    taboType: property.taboType || 'طابو أخضر',
+    priceUSD,
+    priceSYP,
+  };
+};
+
+const allProperties = [...mockSaleProperties, ...mockRentProperties].map(enrichProperty);
 
 const PropertyDetailPage = () => {
   const { id } = useParams();
@@ -335,6 +390,8 @@ const PropertyDetailPage = () => {
     'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=1200',
     'https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=1200',
     'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1200',
+    'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200',
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200',
   ];
   const [activeImage, setActiveImage] = useState(imageUrl);
 
@@ -363,7 +420,7 @@ const PropertyDetailPage = () => {
       </Helmet>
 
       <div className="min-h-screen pt-[5.5rem] pb-16 bg-gradient-to-br from-background to-muted">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4" dir="rtl">
           {/* Back Button */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
@@ -396,24 +453,24 @@ const PropertyDetailPage = () => {
                   />
                 </AspectRatio>
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {galleryImages.map((img, index) => (
                   <button
                     key={`${property.id}-gallery-${index}`}
                     type="button"
-                    className={`relative overflow-hidden rounded-2xl border-2 transition-all ${
+                    className={`relative overflow-hidden rounded-3xl border-2 transition-all ${
                       activeImage === img ? 'border-primary shadow-lg' : 'border-transparent hover:border-primary/50'
                     }`}
                     onClick={() => setActiveImage(img)}
                     aria-label={`عرض الصورة ${index + 1}`}
                   >
-                    <AspectRatio ratio={4 / 3}>
+                    <AspectRatio ratio={16 / 10}>
                       <img
                         src={img}
                         alt={`${property.title} ${index + 1}`}
                         className="h-full w-full object-cover"
                         onError={(e) => {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800';
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200';
                         }}
                       />
                     </AspectRatio>
@@ -433,52 +490,104 @@ const PropertyDetailPage = () => {
                     {property.city}
                   </Badge>
                 </div>
-                <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-4">
+                <h1 className="text-4xl lg:text-5xl leading-[1.2] pb-1 font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-4">
                   {property.title}
                 </h1>
-                <div className="text-3xl lg:text-4xl font-bold text-primary mb-2">
+                {/*<div className="text-3xl lg:text-4xl font-bold text-primary mb-2">
                   {property.price}
-                </div>
+                </div>*/}
                 {property.purpose === 'rent' && (
-                  <p className="text-xl text-muted-foreground font-semibold">للإيجار الشهري</p>
+                  <p className="text-xl text-muted-foreground font-semibold">للإيجار {property.rentDuration || 'الشهري'}</p>
                 )}
               </div>
 
               <Card className="glass-card border-border/50 backdrop-blur-md">
-                <CardContent className="p-8 space-y-6">
-                  <div className="grid grid-cols-3 gap-6 text-center">
-                    <div className="p-6 bg-muted/50 rounded-2xl hover:bg-muted hover:shadow-lg transition-all">
-                      <Bed className="h-12 w-12 text-primary mx-auto mb-3" />
-                      <div className="text-2xl font-bold text-foreground">{property.rooms}</div>
-                      <div className="text-muted-foreground">غرف نوم</div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-2xl">تفاصيل العقار</CardTitle>
+                  <CardDescription className="text-muted-foreground">معلومات مفصلة عن العقار</CardDescription>
+                </CardHeader>
+                <CardContent className="p-8 pt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-right">
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">نوع العقار</div>
+                      <div className="font-semibold">{property.propertyType}</div>
                     </div>
-                    <div className="p-6 bg-muted/50 rounded-2xl hover:bg-muted hover:shadow-lg transition-all">
-                      <Bath className="h-12 w-12 text-primary mx-auto mb-3" />
-                      <div className="text-2xl font-bold text-foreground">{property.baths}</div>
-                      <div className="text-muted-foreground">حمامات</div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">فئة العقار</div>
+                      <div className="font-semibold">{property.category}</div>
                     </div>
-                    <div className="p-6 bg-muted/50 rounded-2xl hover:bg-muted hover:shadow-lg transition-all">
-                      <Maximize2 className="h-12 w-12 text-primary mx-auto mb-3" />
-                      <div className="text-2xl font-bold text-foreground">{property.area}</div>
-                      <div className="text-muted-foreground">المساحة م²</div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">المحافظة</div>
+                      <div className="font-semibold">{property.governorate}</div>
                     </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4 p-6 bg-muted/30 rounded-3xl">
-                      <MapPin className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" />
-                      <div>
-                        <div className="font-semibold text-foreground mb-1">الموقع</div>
-                        <div className="text-lg">{property.address}</div>
-                      </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">المنطقة</div>
+                      <div className="font-semibold">{property.areaName}</div>
                     </div>
-                    {property.status && (
-                      <div className="flex items-center gap-3 p-6 bg-muted/30 rounded-3xl">
-                        <Badge variant={property.status === 'جيد' ? 'default' : 'secondary'} className="text-lg px-4 py-2">
-                          {property.status}
-                        </Badge>
-                      </div>
-                    )}
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">المساحة المبنية</div>
+                      <div className="font-semibold">{property.builtArea} م²</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">المساحة الكلية</div>
+                      <div className="font-semibold">{property.totalArea} م²</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">الطابق</div>
+                      <div className="font-semibold">{property.floor}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">عمر البناء</div>
+                      <div className="font-semibold">{property.age}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">حالة الإنشاء</div>
+                      <div className="font-semibold">{property.constructionStatus}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">نوع التدفئة</div>
+                      <div className="font-semibold">{property.heating}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">نوع التبريد</div>
+                      <div className="font-semibold">{property.cooling}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">عدد الشرفات</div>
+                      <div className="font-semibold">{property.balconies}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">مواقف السيارات</div>
+                      <div className="font-semibold">{property.parking}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">الفرش</div>
+                      <div className="font-semibold">{property.furniture}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">المصعد</div>
+                      <div className="font-semibold">{property.elevator}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">حالة الاستخدام</div>
+                      <div className="font-semibold">{property.occupancy}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">حالة البناء</div>
+                      <div className="font-semibold">{property.buildingCondition}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">نوع الطابو</div>
+                      <div className="font-semibold">{property.taboType}</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">السعر بالدولار</div>
+                      <div className="font-semibold">{property.priceUSD} $</div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-muted/30">
+                      <div className="text-sm text-muted-foreground">السعر بالليرة السورية</div>
+                      <div className="font-semibold">{property.priceSYP} ألف</div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -498,4 +607,3 @@ const PropertyDetailPage = () => {
 };
 
 export default PropertyDetailPage;
-
