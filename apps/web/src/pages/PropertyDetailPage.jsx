@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { ArrowLeft, Heart, MapPin, Bed, Bath, Maximize2, Phone, Mail } from 'lucide-react';
+import { ArrowLeft, Heart, MapPin, Bed, Bath, Maximize2, Phone, Mail, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -394,10 +394,38 @@ const PropertyDetailPage = () => {
     'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200',
   ];
   const [activeImage, setActiveImage] = useState(imageUrl);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const handlePrevious = () => {
+    setCurrentImageIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
+    setActiveImage(galleryImages[(currentImageIndex === 0 ? galleryImages.length - 1 : currentImageIndex - 1)]);
+  };
+
+  const handleNext = () => {
+    setCurrentImageIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
+    setActiveImage(galleryImages[(currentImageIndex === galleryImages.length - 1 ? 0 : currentImageIndex + 1)]);
+  };
 
   useEffect(() => {
     setActiveImage(imageUrl);
+    setCurrentImageIndex(0);
   }, [imageUrl]);
+
+  // Auto-slide carousel every 3 seconds (mobile only)
+  useEffect(() => {
+    const isMobile = window.innerWidth < 640; // sm breakpoint
+    if (!isMobile) return;
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [galleryImages.length]);
+
+  useEffect(() => {
+    setActiveImage(galleryImages[currentImageIndex]);
+  }, [currentImageIndex, galleryImages]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -437,11 +465,83 @@ const PropertyDetailPage = () => {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start"
+            className="w-full flex flex-col lg:grid lg:grid-cols-2 gap-12 lg:gap-16 items-start"
           >
+            {/* Title Section - Mobile Only */}
+            <motion.div variants={itemVariants} className="lg:hidden space-y-2">
+              <div className="flex flex-wrap gap-2 mb-6">
+                <Badge variant="secondary" className="bg-primary/10 text-primary text-lg px-4 py-2 rounded-full font-semibold">
+                  {property.type}
+                </Badge>
+                <Badge variant="outline" className="border-primary/50 text-primary/80 text-lg px-4 py-2 rounded-full font-semibold">
+                  {property.city}
+                </Badge>
+              </div>
+              <h1 className="text-4xl lg:text-5xl leading-[1.2] pb-1 font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-4">
+                {property.title}
+              </h1>
+              {property.purpose === 'rent' && (
+                <p className="text-xl text-muted-foreground font-semibold">للإيجار {property.rentDuration || 'الشهري'}</p>
+              )}
+            </motion.div>
+
             {/* Image */}
-            <motion.div variants={itemVariants} className="space-y-4">
-              <div className="rounded-3xl overflow-hidden shadow-2xl">
+            <motion.div variants={itemVariants} className="w-full space-y-4">
+              {/* Main Image - Mobile with Controls */}
+              <div className="sm:hidden relative">
+                <div className="rounded-3xl overflow-hidden shadow-2xl">
+                  <AspectRatio ratio={4 / 3} className="w-full h-[300px]">
+                    <img
+                      src={activeImage}
+                      alt={property.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200';
+                      }}
+                    />
+                  </AspectRatio>
+                </div>
+
+                {/* Navigation Buttons */}
+                <button
+                  onClick={handlePrevious}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all z-10"
+                  aria-label="الصورة السابقة"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all z-10"
+                  aria-label="الصورة التالية"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+
+                {/* Dots Indicator */}
+                <div className="flex justify-center gap-2 mt-4">
+                  {galleryImages.map((_, index) => (
+                    <button
+                      key={`dot-${index}`}
+                      onClick={() => {
+                        setCurrentImageIndex(index);
+                      }}
+                      className={`h-2 rounded-full transition-all ${
+                        index === currentImageIndex ? 'bg-primary w-8' : 'bg-muted-foreground/50 w-2'
+                      }`}
+                      aria-label={`انتقل إلى الصورة ${index + 1}`}
+                    />
+                  ))}
+                </div>
+
+                {/* Image Counter */}
+                <div className="text-center text-sm text-muted-foreground mt-2">
+                  {currentImageIndex + 1} / {galleryImages.length}
+                </div>
+              </div>
+
+              {/* Main Image - Desktop */}
+              <div className="hidden sm:block rounded-3xl overflow-hidden shadow-2xl">
                 <AspectRatio ratio={4 / 3} className="w-full h-[500px] lg:h-[600px]">
                   <img
                     src={activeImage}
@@ -453,7 +553,9 @@ const PropertyDetailPage = () => {
                   />
                 </AspectRatio>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              {/* Desktop Thumbnail Grid */}
+              <div className="hidden sm:grid grid-cols-2 gap-4">
                 {galleryImages.map((img, index) => (
                   <button
                     key={`${property.id}-gallery-${index}`}
@@ -480,8 +582,9 @@ const PropertyDetailPage = () => {
             </motion.div>
 
             {/* Details */}
-            <motion.div variants={itemVariants} className="space-y-8">
-              <div>
+            <motion.div variants={itemVariants} className="w-full space-y-8">
+              {/* Title Section - Desktop Only */}
+              <div className="hidden lg:block">
                 <div className="flex flex-wrap gap-2 mb-6">
                   <Badge variant="secondary" className="bg-primary/10 text-primary text-lg px-4 py-2 rounded-full font-semibold">
                     {property.type}
@@ -493,9 +596,6 @@ const PropertyDetailPage = () => {
                 <h1 className="text-4xl lg:text-5xl leading-[1.2] pb-1 font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-4">
                   {property.title}
                 </h1>
-                {/*<div className="text-3xl lg:text-4xl font-bold text-primary mb-2">
-                  {property.price}
-                </div>*/}
                 {property.purpose === 'rent' && (
                   <p className="text-xl text-muted-foreground font-semibold">للإيجار {property.rentDuration || 'الشهري'}</p>
                 )}
@@ -507,7 +607,7 @@ const PropertyDetailPage = () => {
                   <CardDescription className="text-muted-foreground">معلومات مفصلة عن العقار</CardDescription>
                 </CardHeader>
                 <CardContent className="p-8 pt-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-right">
+                  <div className="grid grid-cols-2 gap-4 text-right">
                     <div className="p-4 rounded-2xl bg-muted/30">
                       <div className="text-sm text-muted-foreground">نوع العقار</div>
                       <div className="font-semibold">{property.propertyType}</div>
@@ -599,6 +699,23 @@ const PropertyDetailPage = () => {
                 </Button>
               </div>
             </motion.div>
+          </motion.div>
+
+          {/* Description Section - Full Width */}
+          <motion.div variants={itemVariants} className="mt-8">
+            <Card className="glass-card border-border/50 backdrop-blur-md w-full">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-2xl">الوصف</CardTitle>
+                <CardDescription className="text-muted-foreground">معلومات عن العقار</CardDescription>
+              </CardHeader>
+              <CardContent className="p-8 pt-4">
+                <p className="text-right text-base leading-relaxed text-foreground/80">
+                  {property.title} في موقع استراتيجي وممتاز. يتميز العقار بتصميم عصري وتشطيب فاخر، مع جميع المرافق الحديثة والخدمات المتكاملة. 
+                  موقعه المميز يوفر سهولة الوصول إلى جميع الخدمات الأساسية والمتاجر والمطاعم والمدارس. 
+                  العقار في حالة ممتازة ويستحق الاستثمار فيه.
+                </p>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
       </div>
