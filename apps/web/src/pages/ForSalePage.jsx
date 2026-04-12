@@ -284,6 +284,7 @@ const roomsOptions = ['عدد الغرف', '1', '2', '3', '4', '5+'];
 
 const ForSalePage = () => {
   const [filters, setFilters] = useState({ listingType: 'sale' });
+  const [sortBy, setSortBy] = useState('newest');
 
   const filteredProperties = useMemo(() => {
     return mockProperties.filter((property) => {
@@ -377,8 +378,20 @@ const ForSalePage = () => {
       if (filters.priceMax && priceNum > filters.priceMax) return false;
 
       return true;
+    }).sort((a, b) => {
+      switch(sortBy) {
+        case 'letters':
+          return b.title.localeCompare(a.title);
+        case 'space':
+          return b.totalArea - a.totalArea;
+        case 'price':
+          return b.priceSYP - a.priceSYP;
+        case 'newest':
+        default:
+          return b.id - a.id;
+      }
     });
-  }, [filters]);
+  }, [filters, sortBy]);
 
   const containerVariants = {
     visible: {
@@ -406,11 +419,30 @@ const ForSalePage = () => {
         {/* Main Content with Sidebar */}
         <div className="container mx-auto px-4 lg:px-8 pt-8 lg:pt-4">
           <div className="lg:grid lg:grid-cols-[320px_1fr] gap-8 items-start">
-            {/* Advanced Filters Sidebar */}
-            <PropertyFilters filters={filters} onFilterChange={setFilters} />
+            {/* Advanced Filters Sidebar - Hidden on Mobile */}
+            <div className="hidden lg:block">
+              <PropertyFilters filters={filters} onFilterChange={setFilters} />
+            </div>
 
             {/* Properties Grid */}
             <div className="space-y-6">
+              {/* Mobile Filter & Sort Controls - Side by Side */}
+              <div className="lg:hidden flex flex-wrap items-center gap-4 mb-8">
+                <div className="flex-1">
+                  <PropertyFilters filters={filters} onFilterChange={setFilters} />
+                </div>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40" dir="rtl">
+                    <SelectValue placeholder="ترتيب حسب" />
+                  </SelectTrigger>
+                  <SelectContent dir="rtl">
+                    <SelectItem value="newest">الأحدث أولاً</SelectItem>
+                    <SelectItem value="letters">ترتيب أبجدي</SelectItem>
+                    <SelectItem value="space">المساحة (الأكبر أولاً)</SelectItem>
+                    <SelectItem value="price">السعر (الأعلى أولاً)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               {filteredProperties.length === 0 ? (
                 <Card className="glass-card border-border/50">
                   <CardContent className="py-16 text-center">
@@ -423,10 +455,18 @@ const ForSalePage = () => {
                 </Card>
               ) : (
                 <div>
-                  <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-                    <div className="text-foreground font-bold text-xl">
-                      {filteredProperties.length} عقار للبيع متاح
-                    </div>
+                  <div className="hidden lg:flex items-center justify-end gap-4 mb-8">
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="w-40" dir="rtl">
+                        <SelectValue placeholder="ترتيب حسب" />
+                      </SelectTrigger>
+                      <SelectContent dir="rtl">
+                        <SelectItem value="newest">الأحدث أولاً</SelectItem>
+                        <SelectItem value="letters">ترتيب أبجدي</SelectItem>
+                        <SelectItem value="space">المساحة (الأكبر أولاً)</SelectItem>
+                        <SelectItem value="price">السعر (الأعلى أولاً)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <motion.div
